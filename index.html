@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>drizzle</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #1B364B;
+            flex-direction: column;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #1B364B;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background-color: rgba(27, 54, 75, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-btn:hover {
+            color: #FFFFFF;
+        }
+
+        .nav-btn.active {
+            color: #FFFFFF;
+            border-bottom: 2px solid #780000;
+        }
+
+        .main-title {
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+
+        .title-prefix {
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+        }
+
+        .title-city {
+            color: #CCCCDD;
+            font-weight: 700;
+        }
+
+        .weather-container {
+            display: flex;
+            gap: 30px; 
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        .weather-box {
+            background-color: #FFFFFF;
+            flex: 1; 
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-top: 6px solid #780000;
+            text-align: center;
+        }
+
+        .day-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #415A77;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .conditions {
+            font-size: 1.7rem;
+            color: #780000;
+            margin-bottom: 25px;
+        }
+
+        .temperatures {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 15px;
+        }
+
+        .temp-max {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #1B364B;
+        }
+
+        .temp-min {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #780000;
+        }
+        
+        @media (max-width: 600px) {
+            .weather-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <button class="nav-btn" onclick="updateWeather('Warsaw', this)">Warsaw</button>
+        <button class="nav-btn active" onclick="updateWeather('Cracow', this)">Cracow</button>
+        <button class="nav-btn" onclick="updateWeather('Zakopane', this)">Zakopane</button>
+    </nav>
+
+    <h1 class="main-title">
+        <span class="title-prefix">Weather in: </span><span class="title-city" id="location-city">...</span>
+    </h1>
+
+    <div class="weather-container">
+        <div class="weather-box" id="box-today">
+            <div class="day-label">Today</div>
+            <div class="conditions" id="today-cond">...</div>
+            <div class="temperatures">
+                <div class="temp-max" id="today-max">--°</div>
+                <div class="temp-min" id="today-min">--°</div>
+            </div>
+        </div>
+
+        <div class="weather-box" id="box-tomorrow">
+            <div class="day-label">Tomorrow</div>
+            <div class="conditions" id="tomorrow-cond">...</div>
+            <div class="temperatures">
+                <div class="temp-max" id="tomorrow-max">--°</div>
+                <div class="temp-min" id="tomorrow-min">--°</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateWeather(cityName, element) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            
+            fetchWeather(cityName);
+        }
+
+        async function fetchWeather(city) {
+            const API_URL = 'http://localhost:8080/in?city=' + city;
+            
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('Błąd sieci');
+                
+                const data = await response.json();
+
+                if (data && data.length >= 2) {
+                    const today = data[0];
+                    const tomorrow = data[1];
+
+                    document.getElementById('location-city').textContent = today.city;
+
+                    // TODAY
+                    document.getElementById('today-cond').textContent = today.conditions;
+                    document.getElementById('today-max').textContent = today.temperature_max + '°';
+                    document.getElementById('today-min').textContent = today.temperature_min + '°';
+
+                    // TOMORROW
+                    document.getElementById('tomorrow-cond').textContent = tomorrow.conditions;
+                    document.getElementById('tomorrow-max').textContent = tomorrow.temperature_max + '°';
+                    document.getElementById('tomorrow-min').textContent = tomorrow.temperature_min + '°';
+                }
+            } catch (error) {
+                console.error('Błąd pobierania danych:', error);
+                document.getElementById('today-city').textContent = 'Błąd serwera';
+                document.getElementById('tomorrow-city').textContent = 'Błąd serwera';
+            }
+        }
+
+        window.onload = fetchWeather('Cracow');
+    </script>
+</body>
+</html>
